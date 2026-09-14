@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cycle Sync</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#150C1E">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cycle Sync">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="statusRow" id="statusRow">
+    <div class="chip" id="installChip" style="display:none;">
+      <span id="installChipText">Install on your phone</span>
+      <button id="installBtn" class="chip-action" style="display:none;">Install</button>
+    </div>
+    <div class="chip chip-connect" id="connectChip">
+      <span id="connStatus">Not connected to Google Calendar</span>
+      <button id="connectBtn" class="chip-action">Connect</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <header class="wordmark">
+      <span class="mark">◐</span>
+      <span class="name">Cycle Sync</span>
+    </header>
+
+    <section class="hero">
+      <div class="wheel">
+        <svg viewBox="0 0 240 240">
+          <circle cx="120" cy="120" r="104" class="wheel-track"/>
+          <circle id="wheelProgress" cx="120" cy="120" r="104" class="wheel-progress"
+            stroke-dasharray="653.4" stroke-dashoffset="653.4" transform="rotate(-90 120 120)"/>
+        </svg>
+        <div class="wheel-center">
+          <div class="wheel-day" id="wheelDay">–</div>
+          <div class="wheel-of" id="wheelOf"></div>
+          <div class="wheel-phase" id="wheelPhase">Log a period to begin</div>
+        </div>
+      </div>
+      <div class="hero-next" id="heroNext"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Log a period</h2>
+      <div class="log-form">
+        <div class="field field-date">
+          <label for="newDate">Start date</label>
+          <input type="date" id="newDate">
+        </div>
+        <div class="field field-length">
+          <label for="newLength">Length</label>
+          <input type="number" id="newLength" placeholder="5" min="1" max="14">
+        </div>
+        <button class="btn-primary" id="logBtn">Log</button>
+      </div>
+      <button class="btn-text" id="cancelEditBtn" style="display:none;">Cancel edit</button>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header-row">
+        <h2 class="panel-title">History</h2>
+        <span class="count" id="historyBadge">0 entries</span>
+      </div>
+      <div class="timeline" id="logList">
+        <div class="empty-state">Nothing logged yet — your history will line up here as a timeline.</div>
+      </div>
+    </section>
+
+    <p class="footnote">Your dates live only in this browser's local storage — nothing is sent to or stored on any server. Syncing writes directly to your own Google Calendar via Google's API. Predictions are estimates, not medical guidance.</p>
+
+    <div style="height: 96px;"></div>
+  </div>
+
+  <div class="syncBar">
+    <div class="syncBar-inner">
+      <div class="syncBar-status">
+        <span class="status-dot" id="syncDot"></span>
+        <span id="syncDesc">Log a period to get started</span>
+      </div>
+      <button class="btn-gold" id="syncBtn" disabled>Connect Google Calendar first</button>
+    </div>
+    <div id="syncResult" class="sync-result"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
