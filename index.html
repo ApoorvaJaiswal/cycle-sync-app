@@ -76,37 +76,17 @@
     </section>
 
     <section class="panel">
-      <h2 class="panel-title">Add to your calendar</h2>
-
-      <div class="export-option">
-        <div class="export-option-head">
-          <span class="export-label">Download calendar file</span>
-          <span class="export-tag">No setup · any calendar</span>
-        </div>
-        <p class="export-desc">Get an .ics file with your next 6 predicted cycles. Each shows a solid <strong>● most-likely</strong> window with lighter <strong>○ earlier / later</strong> markers on either side, so the uncertainty is visible at a glance. Imports into Google, Apple, or Outlook — no account needed. Best for a one-time setup.</p>
-        <p class="export-note">Heads up: most calendars (including Google) create <em>new</em> events each time you import, so re-importing after a change leaves the old predictions behind as duplicates. For hands-off updates, use auto-sync below instead.</p>
-        <button class="btn-primary btn-wide" id="exportBtn">Download calendar file</button>
+      <h2 class="panel-title">Sync to Google Calendar</h2>
+      <p class="export-desc">Writes your next 6 predicted cycles straight to your Google Calendar. Each cycle shows a solid <strong>● most-likely</strong> window with lighter <strong>○ earlier / later</strong> markers on either side, so the uncertainty is clear at a glance. Every sync clears the old predictions and writes fresh ones — no duplicates, no cleanup.</p>
+      <div class="syncBar-status" style="margin-bottom:12px;">
+        <span class="status-dot" id="syncDot"></span>
+        <span id="syncDesc">Log a period to get started</span>
       </div>
-
-      <div class="export-divider"><span>or</span></div>
-
-      <div class="export-option">
-        <div class="export-option-head">
-          <span class="export-label">Auto-sync with Google</span>
-          <span class="export-tag export-tag-dim">Optional · live updates</span>
-        </div>
-        <p class="export-desc">Connect once and the app writes the same solid ● / light ○ prediction events straight to your Google Calendar. Each sync clears the old predictions and writes fresh ones — no duplicates, no manual cleanup. Requires connecting your Google account.</p>
-        <div class="syncBar-status" style="margin-bottom:10px;">
-          <span class="status-dot" id="syncDot"></span>
-          <span id="syncDesc">Log a period to get started</span>
-        </div>
-        <button class="btn-gold btn-wide" id="syncBtn" disabled>Connect Google Calendar first</button>
-      </div>
-
+      <button class="btn-gold btn-wide" id="syncBtn" disabled>Connect Google Calendar first</button>
       <div id="syncResult" class="sync-result"></div>
     </section>
 
-    <p class="footnote">Your dates live only in this browser's local storage — nothing is sent to or stored on any server. The calendar file is generated on your device; Google sync writes directly to your own calendar via Google's API. Predictions are estimates, not medical guidance.</p>
+    <p class="footnote">Your dates live only in this browser's local storage — nothing is sent to or stored on any server. Sync writes directly to your own Google Calendar via Google's API. Predictions are estimates, not medical guidance.</p>
 
     <div style="height: 24px;"></div>
   </div>

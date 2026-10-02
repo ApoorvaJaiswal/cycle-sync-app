@@ -4,5 +4,5 @@
 // "Authorized JavaScript origins". No client secret is needed for this
 // flow — everything happens in the browser, nothing runs on a server.
 const CONFIG = {
-  GOOGLE_CLIENT_ID: 'YOUR_CLIENT_ID.apps.googleusercontent.com',
+  GOOGLE_CLIENT_ID: '47859019360-efveg36n818hlakianl2dq2iol4lrr0u.apps.googleusercontent.com',
 };

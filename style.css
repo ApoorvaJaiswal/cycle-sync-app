@@ -328,64 +328,16 @@ button { font-family: inherit; cursor: pointer; border: none; }
   border-top: 1px solid var(--line);
 }
 
-/* ---------- Export options: two paths, .ics default + Google optional ---------- */
-.export-option { padding: 2px 0; }
-
-.export-option-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-.export-label {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--paper);
-}
-.export-tag {
-  font-size: 0.66rem;
-  color: var(--rose);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-.export-tag-dim { color: var(--muted-dim); }
-
+/* ---------- Sync to Google Calendar section ---------- */
 .export-desc {
   font-size: 0.8rem;
   color: var(--muted);
   line-height: 1.5;
-  margin: 0 0 10px;
-}
-
-.export-note {
-  font-size: 0.74rem;
-  color: var(--muted-dim);
-  line-height: 1.5;
   margin: 0 0 14px;
-  padding-left: 10px;
-  border-left: 2px solid var(--line);
 }
-.export-note em { color: var(--muted); font-style: italic; }
+.export-desc strong { color: var(--paper); font-weight: 600; }
 
 .btn-wide { width: 100%; }
-
-.export-divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: var(--muted-dim);
-  font-size: 0.72rem;
-  margin: 22px 0;
-}
-.export-divider::before, .export-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-}
-.export-divider span { padding: 0 12px; }
 
 .syncBar-status {
   display: flex;

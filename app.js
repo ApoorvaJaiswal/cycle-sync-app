@@ -339,66 +339,6 @@ document.getElementById('syncBtn').addEventListener('click', async () => {
   refreshDirtyState();
 });
 
-// ---------- .ics export: the no-setup path that works with ANY calendar ----------
-// Builds a standard iCalendar file from the same predictions the Google sync
-// uses. No account, no OAuth, no server -- the user imports it into Google,
-// Apple, Outlook, whatever. This is the default, lowest-friction option.
-function buildICS() {
-  const preds = buildPredictions();
-  if (preds.length === 0) return null;
-
-  const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-  const lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Cycle Sync//Period Predictions//EN',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-  ];
-
-  for (const pred of preds) {
-    for (const seg of buildCycleSegments(pred)) {
-      const start = seg.start.replace(/-/g, '');
-      const end = seg.end.replace(/-/g, '');
-      const desc = segmentDescription(pred, seg).replace(/,/g, '\\,');
-      lines.push(
-        'BEGIN:VEVENT',
-        `UID:cyclesync-${pred.cycleIndex}-${seg.part}@cyclesync.local`,
-        `DTSTAMP:${stamp}`,
-        `DTSTART;VALUE=DATE:${start}`,
-        `DTEND;VALUE=DATE:${end}`,
-        `SUMMARY:${seg.summary}`,
-        `DESCRIPTION:${desc}`,
-        'TRANSP:TRANSPARENT',
-        'END:VEVENT'
-      );
-    }
-  }
-
-  lines.push('END:VCALENDAR');
-  return lines.join('\r\n');
-}
-
-document.getElementById('exportBtn').addEventListener('click', () => {
-  const ics = buildICS();
-  if (!ics) {
-    document.getElementById('syncResult').textContent = 'Log at least two periods so there\'s a cycle length to predict from.';
-    showToast('Not enough data yet');
-    return;
-  }
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'cycle-sync-predictions.ics';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast('Calendar file downloaded');
-  document.getElementById('syncResult').textContent = 'Downloaded. Open the file to import it into any calendar (Google, Apple, Outlook). Re-export after logging new dates to refresh.';
-});
-
 // ---------- UI rendering ----------
 function formatDate(iso) {
   const d = new Date(iso + 'T00:00:00');
