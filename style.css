@@ -188,13 +188,18 @@ body {
 }
 
 /* ---------- Log form: inline row, not boxed ---------- */
+/* One shared control height keeps the date input, number input and Log
+   button on an identical baseline regardless of how each browser sizes its
+   native date/number widgets (the source of the earlier misalignment). */
+:root { --control-h: 44px; }
+
 .log-form {
   display: flex;
   align-items: flex-end;
   gap: 10px;
 }
 
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field-date { flex: 3; }
 .field-length { flex: 1.4; }
 
@@ -204,21 +209,33 @@ body {
 }
 
 input[type="date"], input[type="number"] {
+  box-sizing: border-box;
+  height: var(--control-h);
   background: var(--surface);
   border: 1px solid var(--line);
   color: var(--paper);
-  padding: 11px 12px;
+  padding: 0 12px;
   border-radius: 10px;
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.9rem;
   width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
 }
+/* keep the native date picker indicator visible/tappable after resetting appearance */
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
 input:focus {
   outline: none;
   border-color: var(--rose-dim);
 }
 
 button { font-family: inherit; cursor: pointer; border: none; }
+
+.log-form .btn-primary {
+  height: var(--control-h);
+  padding: 0 20px;
+  flex-shrink: 0;
+}
 
 .btn-primary {
   background: var(--rose);
@@ -339,8 +356,18 @@ button { font-family: inherit; cursor: pointer; border: none; }
   font-size: 0.8rem;
   color: var(--muted);
   line-height: 1.5;
-  margin: 0 0 14px;
+  margin: 0 0 10px;
 }
+
+.export-note {
+  font-size: 0.74rem;
+  color: var(--muted-dim);
+  line-height: 1.5;
+  margin: 0 0 14px;
+  padding-left: 10px;
+  border-left: 2px solid var(--line);
+}
+.export-note em { color: var(--muted); font-style: italic; }
 
 .btn-wide { width: 100%; }
 

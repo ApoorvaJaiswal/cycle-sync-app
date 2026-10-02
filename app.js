@@ -83,13 +83,62 @@ function buildPredictions() {
     cursor = addDays(cursor, avg);
     preds.push({
       cycleIndex: i,
-      bestGuess: toISO(cursor),
-      windowStart: toISO(addDays(cursor, -buffer)),
-      windowEnd: toISO(addDays(cursor, periodLength + buffer)),
-      avg, buffer,
+      bestGuess: toISO(cursor),                             // most-probable start day
+      coreEnd: toISO(addDays(cursor, periodLength)),        // end of the confident core (exclusive)
+      windowStart: toISO(addDays(cursor, -buffer)),         // earliest plausible start
+      windowEnd: toISO(addDays(cursor, periodLength + buffer)), // latest plausible end
+      periodLength, avg, buffer,
     });
   }
   return preds;
+}
+
+// Split one prediction into calendar segments that communicate confidence the
+// way Whoop's solid-vs-dashed band does. Calendars can't draw dashed lines, so
+// the meaning is carried three ways at once: separate adjacent events, a filled
+// vs hollow marker in the title, and plain wording. The middle "core" is the
+// most-probable stretch; the flanking segments are the +/- buffer days, clearly
+// labelled as less likely.
+function buildCycleSegments(pred) {
+  const segments = [];
+
+  if (pred.buffer > 0) {
+    segments.push({
+      part: 'early',
+      start: pred.windowStart,
+      end: pred.bestGuess, // exclusive -> covers the early buffer days only
+      summary: `○ Period — could start up to ${pred.buffer}d earlier`,
+      confidence: 'less likely',
+    });
+  }
+
+  segments.push({
+    part: 'core',
+    start: pred.bestGuess,
+    end: pred.coreEnd,
+    summary: `● Period — most likely (from ${pred.bestGuess})`,
+    confidence: 'most probable',
+  });
+
+  if (pred.buffer > 0) {
+    segments.push({
+      part: 'late',
+      start: pred.coreEnd,
+      end: pred.windowEnd, // exclusive -> covers the late buffer days only
+      summary: `○ Period — could run up to ${pred.buffer}d later`,
+      confidence: 'less likely',
+    });
+  }
+
+  return segments;
+}
+
+function segmentDescription(pred, seg) {
+  const base = `Predicted from a ${pred.avg}-day rolling average of your logged cycles.`;
+  if (seg.confidence === 'most probable') {
+    return `${base} This is the most probable window. The lighter events just before and after mark days it could shift to (+/-${pred.buffer}d). Estimate only, not medical guidance.`;
+  }
+  return `${base} These are lower-confidence buffer days around the most-probable window — your period could begin or end here, but the solid event is the best guess. Estimate only, not medical guidance.`;
 }
 
 // ---------- Google auth: client-side only, token lives in memory, never stored ----------
@@ -199,39 +248,55 @@ function refreshDirtyState() {
 }
 
 // ---------- Calendar API calls, straight from the browser ----------
-async function findExistingEvent(cycleIndex) {
-  const params = new URLSearchParams();
-  params.append('privateExtendedProperty', `app=${APP_TAG}`);
-  params.append('privateExtendedProperty', `cycleIndex=${cycleIndex}`);
-  const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!res.ok) throw new Error('Lookup failed: ' + res.status);
-  const data = await res.json();
-  return data.items && data.items.length > 0 ? data.items[0] : null;
+// Every event this app writes carries app=APP_TAG in its private extended
+// properties, so we can find and clear exactly our own predicted events
+// without touching anything else on the user's calendar.
+async function listAppEvents() {
+  const found = [];
+  let pageToken = null;
+  do {
+    const params = new URLSearchParams();
+    params.append('privateExtendedProperty', `app=${APP_TAG}`);
+    params.append('maxResults', '250');
+    params.append('showDeleted', 'false');
+    if (pageToken) params.append('pageToken', pageToken);
+    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error('Lookup failed: ' + res.status);
+    const data = await res.json();
+    (data.items || []).forEach((e) => found.push(e));
+    pageToken = data.nextPageToken || null;
+  } while (pageToken);
+  return found;
 }
 
-async function upsertEvent(pred) {
+async function deleteEvent(id) {
+  const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  // 410 = already gone; treat as success
+  if (!res.ok && res.status !== 410) throw new Error('Delete failed: ' + res.status);
+}
+
+async function insertSegment(pred, seg) {
   const body = {
-    summary: `Period likely (best guess ${pred.bestGuess})`,
-    description: `Predicted from a ${pred.avg}-day rolling average of your logged cycles, shown as a +/-${pred.buffer} day window. Log the real start date and sync again to refine this.`,
-    start: { date: pred.windowStart },
-    end: { date: pred.windowEnd },
-    extendedProperties: { private: { app: APP_TAG, cycleIndex: String(pred.cycleIndex) } },
+    summary: seg.summary,
+    description: segmentDescription(pred, seg),
+    start: { date: seg.start },
+    end: { date: seg.end },
+    transparency: 'transparent',
+    extendedProperties: {
+      private: { app: APP_TAG, cycleIndex: String(pred.cycleIndex), part: seg.part },
+    },
   };
-
-  const existing = await findExistingEvent(pred.cycleIndex);
-  const url = existing
-    ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${existing.id}`
-    : `https://www.googleapis.com/calendar/v3/calendars/primary/events`;
-
-  const res = await fetch(url, {
-    method: existing ? 'PATCH' : 'POST',
+  const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events`, {
+    method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error('Write failed: ' + res.status);
-  return existing ? 'updated' : 'created';
 }
 
 document.getElementById('syncBtn').addEventListener('click', async () => {
@@ -247,14 +312,23 @@ document.getElementById('syncBtn').addEventListener('click', async () => {
   btn.textContent = 'Syncing...';
 
   try {
-    let created = 0, updated = 0;
+    // Clear this app's previous predicted events first (including any from the
+    // older single-event-per-cycle format), so updates never leave duplicates
+    // or stale predictions behind -- then write the fresh confidence segments.
+    const old = await listAppEvents();
+    for (const e of old) await deleteEvent(e.id);
+
+    let written = 0;
     for (const pred of preds) {
-      const result = await upsertEvent(pred);
-      if (result === 'created') created++; else updated++;
+      for (const seg of buildCycleSegments(pred)) {
+        await insertSegment(pred, seg);
+        written++;
+      }
     }
+
     setLastSyncedSnapshot(sortedEntries());
     document.getElementById('syncResult').textContent =
-      `Synced ${preds.length} predicted cycles (${created} created, ${updated} updated).`;
+      `Synced ${preds.length} cycles (${written} events: a solid most-likely window plus lighter earlier/later markers for each). Replaced ${old.length} previous predicted events.`;
     showToast('Synced to Google Calendar');
   } catch (err) {
     // access token likely expired (they last ~1hr) — ask to reconnect
@@ -283,21 +357,22 @@ function buildICS() {
   ];
 
   for (const pred of preds) {
-    const start = pred.windowStart.replace(/-/g, '');
-    const end = pred.windowEnd.replace(/-/g, '');
-    // Stable UID per cycle index so re-importing an updated file replaces the
-    // same event in calendars that honor UID, rather than duplicating.
-    lines.push(
-      'BEGIN:VEVENT',
-      `UID:cyclesync-period-${pred.cycleIndex}@cyclesync.local`,
-      `DTSTAMP:${stamp}`,
-      `DTSTART;VALUE=DATE:${start}`,
-      `DTEND;VALUE=DATE:${end}`,
-      `SUMMARY:Period likely (best guess ${pred.bestGuess})`,
-      `DESCRIPTION:Predicted from a ${pred.avg}-day rolling average of your logged cycles\\, shown as a +/-${pred.buffer} day window. Re-export after logging a new date to refine. Estimate only\\, not medical guidance.`,
-      'TRANSP:TRANSPARENT',
-      'END:VEVENT'
-    );
+    for (const seg of buildCycleSegments(pred)) {
+      const start = seg.start.replace(/-/g, '');
+      const end = seg.end.replace(/-/g, '');
+      const desc = segmentDescription(pred, seg).replace(/,/g, '\\,');
+      lines.push(
+        'BEGIN:VEVENT',
+        `UID:cyclesync-${pred.cycleIndex}-${seg.part}@cyclesync.local`,
+        `DTSTAMP:${stamp}`,
+        `DTSTART;VALUE=DATE:${start}`,
+        `DTEND;VALUE=DATE:${end}`,
+        `SUMMARY:${seg.summary}`,
+        `DESCRIPTION:${desc}`,
+        'TRANSP:TRANSPARENT',
+        'END:VEVENT'
+      );
+    }
   }
 
   lines.push('END:VCALENDAR');

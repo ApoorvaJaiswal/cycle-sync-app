@@ -83,7 +83,8 @@
           <span class="export-label">Download calendar file</span>
           <span class="export-tag">No setup · any calendar</span>
         </div>
-        <p class="export-desc">Get an .ics file with your next 6 predicted cycles. Import it into Google, Apple, or Outlook — works everywhere, no account needed. Re-export after logging new dates to refresh.</p>
+        <p class="export-desc">Get an .ics file with your next 6 predicted cycles. Each shows a solid <strong>● most-likely</strong> window with lighter <strong>○ earlier / later</strong> markers on either side, so the uncertainty is visible at a glance. Imports into Google, Apple, or Outlook — no account needed. Best for a one-time setup.</p>
+        <p class="export-note">Heads up: most calendars (including Google) create <em>new</em> events each time you import, so re-importing after a change leaves the old predictions behind as duplicates. For hands-off updates, use auto-sync below instead.</p>
         <button class="btn-primary btn-wide" id="exportBtn">Download calendar file</button>
       </div>
 
@@ -94,7 +95,7 @@
           <span class="export-label">Auto-sync with Google</span>
           <span class="export-tag export-tag-dim">Optional · live updates</span>
         </div>
-        <p class="export-desc">Connect once and the app writes predictions straight to your Google Calendar, updating them in place each time you sync. Requires connecting your Google account.</p>
+        <p class="export-desc">Connect once and the app writes the same solid ● / light ○ prediction events straight to your Google Calendar. Each sync clears the old predictions and writes fresh ones — no duplicates, no manual cleanup. Requires connecting your Google account.</p>
         <div class="syncBar-status" style="margin-bottom:10px;">
           <span class="status-dot" id="syncDot"></span>
           <span id="syncDesc">Log a period to get started</span>
