@@ -8,6 +8,24 @@ Licensed under [MIT](./LICENSE) — a permissive default that's easy to swap for
 different license before you publish, if you'd prefer something else.
 
 
+## Two ways to get predictions onto a calendar
+
+The app offers both, and the first needs no setup at all:
+
+1. **Download a calendar file (.ics)** — the default. Generates a standard iCalendar
+   file of your next 6 predicted cycles, entirely on your device. Import it into Google,
+   Apple, Outlook, or any calendar app. No account, no Google project, no OAuth — works
+   for anyone immediately. Re-export after logging a new date to refresh. The only
+   tradeoff is it doesn't auto-update: you re-download when your dates change.
+
+2. **Auto-sync with Google (optional)** — connect once and the app writes predictions
+   directly to your Google Calendar, updating them in place on each sync. This is the
+   convenient path but requires the Google OAuth setup described below, and (for public
+   use beyond your own test users) Google's app verification.
+
+Most people only need option 1. Option 2 is there for anyone who wants hands-off live
+updates and is fine connecting their account.
+
 ## What "no backend" actually means here
 
 - Your logged dates live in `localStorage` in your browser. If you clear browser data

@@ -75,20 +75,39 @@
       </div>
     </section>
 
-    <p class="footnote">Your dates live only in this browser's local storage — nothing is sent to or stored on any server. Syncing writes directly to your own Google Calendar via Google's API. Predictions are estimates, not medical guidance.</p>
+    <section class="panel">
+      <h2 class="panel-title">Add to your calendar</h2>
 
-    <div style="height: 96px;"></div>
-  </div>
-
-  <div class="syncBar">
-    <div class="syncBar-inner">
-      <div class="syncBar-status">
-        <span class="status-dot" id="syncDot"></span>
-        <span id="syncDesc">Log a period to get started</span>
+      <div class="export-option">
+        <div class="export-option-head">
+          <span class="export-label">Download calendar file</span>
+          <span class="export-tag">No setup · any calendar</span>
+        </div>
+        <p class="export-desc">Get an .ics file with your next 6 predicted cycles. Import it into Google, Apple, or Outlook — works everywhere, no account needed. Re-export after logging new dates to refresh.</p>
+        <button class="btn-primary btn-wide" id="exportBtn">Download calendar file</button>
       </div>
-      <button class="btn-gold" id="syncBtn" disabled>Connect Google Calendar first</button>
-    </div>
-    <div id="syncResult" class="sync-result"></div>
+
+      <div class="export-divider"><span>or</span></div>
+
+      <div class="export-option">
+        <div class="export-option-head">
+          <span class="export-label">Auto-sync with Google</span>
+          <span class="export-tag export-tag-dim">Optional · live updates</span>
+        </div>
+        <p class="export-desc">Connect once and the app writes predictions straight to your Google Calendar, updating them in place each time you sync. Requires connecting your Google account.</p>
+        <div class="syncBar-status" style="margin-bottom:10px;">
+          <span class="status-dot" id="syncDot"></span>
+          <span id="syncDesc">Log a period to get started</span>
+        </div>
+        <button class="btn-gold btn-wide" id="syncBtn" disabled>Connect Google Calendar first</button>
+      </div>
+
+      <div id="syncResult" class="sync-result"></div>
+    </section>
+
+    <p class="footnote">Your dates live only in this browser's local storage — nothing is sent to or stored on any server. The calendar file is generated on your device; Google sync writes directly to your own calendar via Google's API. Predictions are estimates, not medical guidance.</p>
+
+    <div style="height: 24px;"></div>
   </div>
 
   <div class="toast" id="toast"></div>

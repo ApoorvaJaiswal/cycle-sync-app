@@ -96,23 +96,50 @@ function buildPredictions() {
 let accessToken = null;
 let tokenClient = null;
 
+// True when config.js still has the shipped placeholder rather than a real ID.
+function clientIdLooksUnset() {
+  const id = (CONFIG && CONFIG.GOOGLE_CLIENT_ID) || '';
+  return (
+    !id ||
+    id.includes('YOUR_CLIENT_ID') ||
+    !id.endsWith('.apps.googleusercontent.com')
+  );
+}
+
 function initGoogleAuth() {
+  if (clientIdLooksUnset()) {
+    // Don't even try to init -- Google would return an opaque error. Tell the
+    // maintainer exactly what's wrong instead.
+    return;
+  }
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CONFIG.GOOGLE_CLIENT_ID,
     scope: 'https://www.googleapis.com/auth/calendar.events',
     callback: (tokenResponse) => {
       if (tokenResponse.error) {
-        showToast('Google sign-in failed');
+        // Surface Google's actual reason (e.g. invalid_client, access_denied)
+        // rather than a generic message, so setup issues are diagnosable.
+        const reason = tokenResponse.error_description || tokenResponse.error;
+        showToast('Google error: ' + reason);
+        document.getElementById('syncResult').textContent =
+          'Google sign-in returned: ' + reason + '. If this says invalid_client, the Client ID in config.js does not match a Google OAuth client — check it character-for-character in Google Cloud Console.';
         return;
       }
       accessToken = tokenResponse.access_token;
+      document.getElementById('syncResult').textContent = '';
       updateConnectionUI(true);
     },
   });
 }
 
 document.getElementById('connectBtn').addEventListener('click', () => {
-  if (!tokenClient) { showToast('Still loading Google sign-in...'); return; }
+  if (clientIdLooksUnset()) {
+    showToast('Client ID not set in config.js');
+    document.getElementById('syncResult').textContent =
+      'The Google Client ID in config.js is still the placeholder. Paste your real ...apps.googleusercontent.com ID into config.js and redeploy. Open yoursite/config.js in a browser to confirm what is actually live.';
+    return;
+  }
+  if (!tokenClient) { showToast('Still loading Google sign-in — try again in a second.'); return; }
   tokenClient.requestAccessToken({ prompt: accessToken ? '' : 'consent' });
 });
 
@@ -236,6 +263,65 @@ document.getElementById('syncBtn').addEventListener('click', async () => {
     updateConnectionUI(false);
   }
   refreshDirtyState();
+});
+
+// ---------- .ics export: the no-setup path that works with ANY calendar ----------
+// Builds a standard iCalendar file from the same predictions the Google sync
+// uses. No account, no OAuth, no server -- the user imports it into Google,
+// Apple, Outlook, whatever. This is the default, lowest-friction option.
+function buildICS() {
+  const preds = buildPredictions();
+  if (preds.length === 0) return null;
+
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Cycle Sync//Period Predictions//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+  ];
+
+  for (const pred of preds) {
+    const start = pred.windowStart.replace(/-/g, '');
+    const end = pred.windowEnd.replace(/-/g, '');
+    // Stable UID per cycle index so re-importing an updated file replaces the
+    // same event in calendars that honor UID, rather than duplicating.
+    lines.push(
+      'BEGIN:VEVENT',
+      `UID:cyclesync-period-${pred.cycleIndex}@cyclesync.local`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${start}`,
+      `DTEND;VALUE=DATE:${end}`,
+      `SUMMARY:Period likely (best guess ${pred.bestGuess})`,
+      `DESCRIPTION:Predicted from a ${pred.avg}-day rolling average of your logged cycles\\, shown as a +/-${pred.buffer} day window. Re-export after logging a new date to refine. Estimate only\\, not medical guidance.`,
+      'TRANSP:TRANSPARENT',
+      'END:VEVENT'
+    );
+  }
+
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const ics = buildICS();
+  if (!ics) {
+    document.getElementById('syncResult').textContent = 'Log at least two periods so there\'s a cycle length to predict from.';
+    showToast('Not enough data yet');
+    return;
+  }
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cycle-sync-predictions.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Calendar file downloaded');
+  document.getElementById('syncResult').textContent = 'Downloaded. Open the file to import it into any calendar (Google, Apple, Outlook). Re-export after logging new dates to refresh.';
 });
 
 // ---------- UI rendering ----------

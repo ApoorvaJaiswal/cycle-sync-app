@@ -311,26 +311,61 @@ button { font-family: inherit; cursor: pointer; border: none; }
   border-top: 1px solid var(--line);
 }
 
-/* ---------- Sticky sync bar: replaces the 4th identical card ---------- */
-.syncBar {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: var(--surface-raised);
-  border-top: 1px solid var(--line);
-  padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
-  z-index: 20;
+/* ---------- Export options: two paths, .ics default + Google optional ---------- */
+.export-option { padding: 2px 0; }
+
+.export-option-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
 }
-.syncBar-inner {
-  max-width: 460px;
-  margin: 0 auto;
+.export-label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--paper);
 }
+.export-tag {
+  font-size: 0.66rem;
+  color: var(--rose);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.export-tag-dim { color: var(--muted-dim); }
+
+.export-desc {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+.btn-wide { width: 100%; }
+
+.export-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--muted-dim);
+  font-size: 0.72rem;
+  margin: 22px 0;
+}
+.export-divider::before, .export-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.export-divider span { padding: 0 12px; }
+
 .syncBar-status {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 0.78rem;
   color: var(--muted);
-  margin-bottom: 10px;
 }
 .status-dot {
   width: 7px;
@@ -343,10 +378,10 @@ button { font-family: inherit; cursor: pointer; border: none; }
 .status-dot.dot-synced { background: var(--green); }
 
 .sync-result {
-  max-width: 460px;
-  margin: 8px auto 0;
+  margin: 16px 0 0;
   font-size: 0.74rem;
   color: var(--muted);
+  line-height: 1.5;
 }
 
 .btn-gold {
@@ -356,7 +391,6 @@ button { font-family: inherit; cursor: pointer; border: none; }
   font-size: 0.86rem;
   padding: 13px 18px;
   border-radius: 10px;
-  width: 100%;
 }
 .btn-gold:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn-gold.dirty { animation: pulse 1.7s ease-in-out infinite; }
